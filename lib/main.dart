@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'package:flutter_riceye/screens/home_screen.dart';
+import 'package:flutter_riceye/screens/detect_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,12 +16,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Riceye',
       theme: ThemeData(
-        fontFamily: "DINPro",
+        fontFamily: "Din Pro",
         primaryColor: Color.fromRGBO(225, 205, 119, 1),
         accentColor: Color.fromRGBO(180, 164, 95, 1),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomeScreen(),
+      home: DetectScreen(),
     );
   }
 }

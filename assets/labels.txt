@@ -1,0 +1,4 @@
+0 Healthy
+1 Brown Spot
+2 Hispa
+3 Leaf Blast
