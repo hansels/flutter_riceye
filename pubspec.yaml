@@ -24,8 +24,10 @@ dependencies:
   camera: ^0.5.8+2
   flutter:
     sdk: flutter
+  groovin_widgets: ^1.5.0+2
   image: ^2.1.12
   image_picker: ^0.6.6+1
+  modal_bottom_sheet: ^0.1.6+1
   percent_indicator: ^2.1.1+1
   tflite: ^1.0.6
 

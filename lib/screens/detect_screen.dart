@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../helpers/app_helper.dart';
 import '../helpers/camera_helper.dart';
@@ -75,7 +76,7 @@ class _DetectScreenPageState extends State<DetectScreen>
           await CameraHelper.stopCamera();
           await TFLiteHelper.classifyImageFromGallery();
           await Future.delayed(
-            Duration(seconds: 3),
+            Duration(seconds: 5),
             () async => CameraHelper.startCamera(),
           );
         },
@@ -85,21 +86,17 @@ class _DetectScreenPageState extends State<DetectScreen>
         future: CameraHelper.initializeControllerFuture,
         builder: (context, snapshot) {
           final size = MediaQuery.of(context).size;
+          final deviceRatio = size.width / size.height;
           if (snapshot.connectionState == ConnectionState.done) {
             // If the Future is complete, display the preview.
             return Stack(
               children: <Widget>[
-                ClipRect(
-                  child: Container(
-                    child: Transform.scale(
-                      scale: CameraHelper.camera.value.aspectRatio /
-                          size.aspectRatio,
-                      child: Center(
-                        child: AspectRatio(
-                          aspectRatio: CameraHelper.camera.value.aspectRatio,
-                          child: CameraPreview(CameraHelper.camera),
-                        ),
-                      ),
+                Center(
+                  child: Transform.scale(
+                    scale: CameraHelper.camera.value.aspectRatio / deviceRatio,
+                    child: AspectRatio(
+                      aspectRatio: CameraHelper.camera.value.aspectRatio,
+                      child: CameraPreview(CameraHelper.camera),
                     ),
                   ),
                 ),
@@ -107,7 +104,6 @@ class _DetectScreenPageState extends State<DetectScreen>
               ],
             );
           } else {
-            // Otherwise, display a loading indicator.
             return Center(child: CircularProgressIndicator());
           }
         },
@@ -180,5 +176,12 @@ class _DetectScreenPageState extends State<DetectScreen>
         AnimationController(vsync: this, duration: Duration(milliseconds: 500));
     _colorTween = ColorTween(begin: Colors.green, end: Colors.red)
         .animate(_colorAnimController);
+  }
+
+  void _showInfographics() {
+    showMaterialModalBottomSheet(
+      context: context,
+      builder: (context, scrollController) => Container(),
+    );
   }
 }
