@@ -42,32 +42,30 @@ class _DetectScreenPageState extends State<DetectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
     return Scaffold(
       body: FutureBuilder<void>(
         future: CameraHelper.initializeControllerFuture,
         builder: (context, snapshot) {
-          final width = MediaQuery.of(context).size.width;
-          final height = MediaQuery.of(context).size.height;
-
+          final width = mediaQuery.size.width;
+          final height = mediaQuery.size.height;
           if (snapshot.connectionState == ConnectionState.done) {
             final aspectRatio = CameraHelper.camera.value.aspectRatio;
+            final deviceRatio = width / height;
+
+            final scale = aspectRatio > deviceRatio
+                ? aspectRatio / deviceRatio
+                : deviceRatio / aspectRatio;
+
             // If the Future is complete, display the preview.
             return Stack(
               children: <Widget>[
-                Container(
-                  width: width,
-                  height: height,
-                  child: ClipRect(
-                    child: OverflowBox(
-                      alignment: Alignment.center,
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        child: Container(
-                          width: width,
-                          height: (height / aspectRatio),
-                          child: CameraPreview(CameraHelper.camera),
-                        ),
-                      ),
+                Transform.scale(
+                  scale: scale,
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: aspectRatio,
+                      child: CameraPreview(CameraHelper.camera),
                     ),
                   ),
                 ),

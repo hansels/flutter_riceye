@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riceye/configs/configs.dart';
 import 'package:flutter_riceye/screens/detect_screen.dart';
+import 'package:splashscreen/splashscreen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,14 @@ class MyApp extends StatelessWidget {
         accentColor: Configs.secondaryColor,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: DetectScreen(),
+      home: SplashScreen(
+        seconds: 2,
+        backgroundColor: Colors.white,
+        loaderColor: Configs.primaryColor,
+        image: Image.asset('assets/icon.png'),
+        navigateAfterSeconds: DetectScreen(),
+        photoSize: 150,
+      ),
     );
   }
 }
