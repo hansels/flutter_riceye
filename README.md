@@ -1,4 +1,4 @@
-# flutter_riceye
+# Flutter Riceye
 
 A new Flutter project.
 

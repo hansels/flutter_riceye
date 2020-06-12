@@ -1,4 +1,4 @@
-package com.example.flutter_riceye
+package dev.mtsstudio.riceye
 
 import io.flutter.embedding.android.FlutterActivity
 
