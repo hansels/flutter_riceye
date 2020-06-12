@@ -1,27 +1,17 @@
-import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
-import '../helpers/app_helper.dart';
+import 'package:camera/camera.dart';
+import 'package:flutter_riceye/screens/image_screen.dart';
+import 'package:flutter_riceye/screens/info_screen.dart';
 import '../helpers/camera_helper.dart';
 import '../helpers/tflite_helper.dart';
 import '../models/result.dart';
 
 class DetectScreen extends StatefulWidget {
-  DetectScreen({Key key, this.title}) : super(key: key);
-
-  final String title;
-
   @override
   _DetectScreenPageState createState() => _DetectScreenPageState();
 }
 
-class _DetectScreenPageState extends State<DetectScreen>
-    with TickerProviderStateMixin {
-  AnimationController _colorAnimController;
-  Animation _colorTween;
-
+class _DetectScreenPageState extends State<DetectScreen> {
   List<Result> outputs;
 
   void initState() {
@@ -37,70 +27,52 @@ class _DetectScreenPageState extends State<DetectScreen>
     //Initialize Camera
     CameraHelper.initializeCamera();
 
-    //Setup Animation
-    _setupAnimation();
-
     //Subscribe to TFLite's Classify events
-    TFLiteHelper.tfLiteResultsController.stream.listen(
-        (value) {
-          value.forEach((element) {
-            _colorAnimController.animateTo(element.confidence,
-                curve: Curves.bounceIn, duration: Duration(milliseconds: 500));
-          });
+    TFLiteHelper.tfLiteResultsController.stream.listen((value) {
+      //Set Results
+      outputs = value;
 
-          //Set Results
-          outputs = value;
-
-          //Update results on screen
-          setState(() {
-            //Set bit to false to allow detection again
-            CameraHelper.isDetecting = false;
-          });
-        },
-        onDone: () {},
-        onError: (error) {
-          AppHelper.log("listen", error);
-        });
+      //Update results on screen
+      setState(() {
+        //Set bit to false to allow detection again
+        CameraHelper.isDetecting = false;
+      });
+    }, onDone: () {}, onError: (error) {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Riceye"),
-        centerTitle: true,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await CameraHelper.stopCamera();
-          await TFLiteHelper.classifyImageFromGallery();
-          await Future.delayed(
-            Duration(seconds: 5),
-            () async => CameraHelper.startCamera(),
-          );
-        },
-        child: Icon(Icons.image),
-      ),
       body: FutureBuilder<void>(
         future: CameraHelper.initializeControllerFuture,
         builder: (context, snapshot) {
-          final size = MediaQuery.of(context).size;
-          final deviceRatio = size.width / size.height;
+          final width = MediaQuery.of(context).size.width;
+          final height = MediaQuery.of(context).size.height;
+
           if (snapshot.connectionState == ConnectionState.done) {
+            final aspectRatio = CameraHelper.camera.value.aspectRatio;
             // If the Future is complete, display the preview.
             return Stack(
               children: <Widget>[
-                Center(
-                  child: Transform.scale(
-                    scale: CameraHelper.camera.value.aspectRatio / deviceRatio,
-                    child: AspectRatio(
-                      aspectRatio: CameraHelper.camera.value.aspectRatio,
-                      child: CameraPreview(CameraHelper.camera),
+                Container(
+                  width: width,
+                  height: height,
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: Alignment.center,
+                      child: FittedBox(
+                        fit: BoxFit.fitWidth,
+                        child: Container(
+                          width: width,
+                          height: (height / aspectRatio),
+                          child: CameraPreview(CameraHelper.camera),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                _buildResultsWidget(width, outputs)
+                TFLiteHelper.buildResultsWidget(width, outputs),
+                _title(width, context),
               ],
             );
           } else {
@@ -115,73 +87,73 @@ class _DetectScreenPageState extends State<DetectScreen>
   void dispose() {
     TFLiteHelper.disposeModel();
     CameraHelper.camera.dispose();
-    AppHelper.log("dispose", "Clear resources.");
     super.dispose();
   }
 
-  Widget _buildResultsWidget(double width, List<Result> outputs) {
-    return Positioned.fill(
+  Widget _title(double width, BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+    return Positioned(
       child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          height: 200.0,
-          width: width,
-          color: Colors.white,
-          child: outputs != null && outputs.isNotEmpty
-              ? ListView.builder(
-                  itemCount: outputs.length,
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(20.0),
-                  itemBuilder: (BuildContext context, int index) {
-                    return Column(
-                      children: <Widget>[
-                        Text(
-                          outputs[index].label,
-                          style: TextStyle(
-                            color: _colorTween.value,
-                            fontSize: 20.0,
-                          ),
-                        ),
-                        AnimatedBuilder(
-                            animation: _colorAnimController,
-                            builder: (context, child) => LinearPercentIndicator(
-                                  width: width * 0.88,
-                                  lineHeight: 14.0,
-                                  percent: outputs[index].confidence,
-                                  progressColor: _colorTween.value,
-                                )),
-                        Text(
-                          "${(outputs[index].confidence * 100.0).toStringAsFixed(2)} %",
-                          style: TextStyle(
-                            color: _colorTween.value,
-                            fontSize: 16.0,
-                          ),
-                        ),
-                      ],
-                    );
-                  })
-              : Center(
-                  child: Text("Wating for model to detect..",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20.0,
-                      ))),
+        alignment: Alignment.topCenter,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: topPadding + 16.0),
+              child: RawMaterialButton(
+                onPressed: () async {
+                  await CameraHelper.stopCamera();
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => InfoScreen(),
+                    ),
+                  );
+                },
+                child: const Icon(
+                  Icons.info,
+                  color: Colors.white,
+                  size: 30.0,
+                ),
+                padding: const EdgeInsets.all(9.0),
+                shape: CircleBorder(),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topPadding + 16.0),
+              child: Text(
+                "RICEYE",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topPadding + 16.0),
+              child: RawMaterialButton(
+                onPressed: () async {
+                  await CameraHelper.stopCamera();
+                  var file = await TFLiteHelper.classifyImageFromGallery();
+                  if (file == null) return await CameraHelper.startCamera();
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ImageScreen(file, outputs),
+                    ),
+                  );
+                },
+                child: const Icon(
+                  Icons.image,
+                  color: Colors.white,
+                  size: 30.0,
+                ),
+                padding: const EdgeInsets.all(9.0),
+                shape: CircleBorder(),
+              ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  void _setupAnimation() {
-    _colorAnimController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 500));
-    _colorTween = ColorTween(begin: Colors.green, end: Colors.red)
-        .animate(_colorAnimController);
-  }
-
-  void _showInfographics() {
-    showMaterialModalBottomSheet(
-      context: context,
-      builder: (context, scrollController) => Container(),
     );
   }
 }

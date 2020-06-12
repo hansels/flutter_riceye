@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:camera/camera.dart';
-import 'package:image/image.dart' as img;
+import 'package:flutter/material.dart';
+import 'package:flutter_riceye/configs/configs.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../models/result.dart';
 import 'package:tflite/tflite.dart';
-
-import 'app_helper.dart';
 
 class TFLiteHelper {
   static StreamController<List<Result>> tfLiteResultsController =
@@ -17,16 +17,15 @@ class TFLiteHelper {
   static bool busy = false;
 
   static Future<String> loadModel() async {
-    AppHelper.log("loadModel", "Loading model..");
-
     return Tflite.loadModel(
       model: "assets/model_baru.tflite",
       labels: "assets/labels.txt",
     );
   }
 
-  static Future<void> classifyImageFromGallery() async {
+  static Future<File> classifyImageFromGallery() async {
     var pickedImage = await ImagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedImage == null) return null;
     var value = await Tflite.runModelOnImage(
       path: pickedImage.path,
       numResults: 3,
@@ -34,6 +33,7 @@ class TFLiteHelper {
       imageStd: 127.5,
     );
     predict(value);
+    return pickedImage;
   }
 
   static Future<void> classifyImage(CameraImage image) async {
@@ -52,22 +52,17 @@ class TFLiteHelper {
 
   static void predict(List<dynamic> value) {
     if (value.isNotEmpty) {
-      AppHelper.log("classifyImage", "Results loaded. ${value.length}");
-
       //Clear previous results
       _outputs.clear();
 
       value.forEach((element) {
         _outputs.add(
             Result(element['confidence'], element['index'], element['label']));
-
-        AppHelper.log("classifyImage",
-            "${element['confidence']} , ${element['index']}, ${element['label']}");
       });
     }
 
     //Sort results according to most confidence
-    _outputs.sort((a, b) => a.confidence.compareTo(b.confidence));
+    _outputs.sort((a, b) => b.confidence.compareTo(a.confidence));
 
     busy = false;
 
@@ -80,19 +75,61 @@ class TFLiteHelper {
     tfLiteResultsController.close();
   }
 
-  static Float32List imageToByteListFloat32(
-      img.Image image, int inputSize, double mean, double std) {
-    var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
-    var buffer = Float32List.view(convertedBytes.buffer);
-    int pixelIndex = 0;
-    for (var i = 0; i < inputSize; i++) {
-      for (var j = 0; j < inputSize; j++) {
-        var pixel = image.getPixel(j, i);
-        buffer[pixelIndex++] = (img.getRed(pixel) - mean) / std;
-        buffer[pixelIndex++] = (img.getGreen(pixel) - mean) / std;
-        buffer[pixelIndex++] = (img.getBlue(pixel) - mean) / std;
-      }
-    }
-    return convertedBytes.buffer.asFloat32List();
+  static Widget buildResultsWidget(
+    double width,
+    List<Result> outputs, {
+    Color color = Colors.white54,
+  }) {
+    return Positioned(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          height: 100.0,
+          width: width,
+          color: color,
+          child: outputs != null && outputs.isNotEmpty
+              ? ListView.builder(
+                  itemCount: outputs.length,
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.all(20.0),
+                  itemBuilder: (BuildContext context, int index) {
+                    return Column(
+                      children: <Widget>[
+                        Text(
+                          outputs[index].label,
+                          style: TextStyle(
+                            color: Configs.tertiaryColor,
+                            fontSize: 20.0,
+                          ),
+                        ),
+                        LinearPercentIndicator(
+                          width: width * 0.875,
+                          lineHeight: 14.0,
+                          percent: outputs[index].confidence,
+                          progressColor: Configs.tertiaryColor,
+                        ),
+                        Text(
+                          "${(outputs[index].confidence * 100.0).toStringAsFixed(2)} %",
+                          style: TextStyle(
+                            color: Configs.tertiaryColor,
+                            fontSize: 16.0,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                )
+              : const Center(
+                  child: Text(
+                    "Wating for model to detect..",
+                    style: TextStyle(
+                      color: Configs.tertiaryColor,
+                      fontSize: 20.0,
+                    ),
+                  ),
+                ),
+        ),
+      ),
+    );
   }
 }

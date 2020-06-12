@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riceye/configs/configs.dart';
 import 'package:flutter_riceye/screens/detect_screen.dart';
 
 Future<void> main() async {
@@ -14,11 +15,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Riceye',
+      title: Configs.appName,
       theme: ThemeData(
         fontFamily: "Din Pro",
-        primaryColor: Color.fromRGBO(225, 205, 119, 1),
-        accentColor: Color.fromRGBO(180, 164, 95, 1),
+        primaryColor: Configs.primaryColor,
+        accentColor: Configs.secondaryColor,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: DetectScreen(),

@@ -1,6 +1,5 @@
 import 'package:camera/camera.dart';
 
-import 'app_helper.dart';
 import 'tflite_helper.dart';
 
 class CameraHelper {
@@ -19,34 +18,33 @@ class CameraHelper {
   }
 
   static Future<void> startCamera() async {
-    await camera.startImageStream((CameraImage image) {
-      if (!TFLiteHelper.modelLoaded) return;
-      if (isDetecting) return;
-      isDetecting = true;
-      try {
-        TFLiteHelper.classifyImage(image);
-      } catch (e) {
-        print(e);
-      }
-    });
+    try {
+      await camera.startImageStream((CameraImage image) {
+        if (!TFLiteHelper.modelLoaded) return;
+        if (isDetecting) return;
+        isDetecting = true;
+        try {
+          TFLiteHelper.classifyImage(image);
+        } catch (e) {
+          print(e);
+        }
+      });
+    } catch (err) {}
   }
 
   static Future<void> stopCamera() async {
-    await camera.stopImageStream();
+    try {
+      await camera.stopImageStream();
+    } catch (err) {}
   }
 
   static void initializeCamera() async {
-    AppHelper.log("_initializeCamera", "Initializing camera..");
-
     camera = CameraController(
       await _getCamera(_direction),
       ResolutionPreset.veryHigh,
       enableAudio: false,
     );
-    initializeControllerFuture = camera.initialize().then((value) {
-      AppHelper.log(
-          "_initializeCamera", "Camera initialized, starting camera stream..");
-      startCamera();
-    });
+    initializeControllerFuture =
+        camera.initialize().then((value) => startCamera());
   }
 }
