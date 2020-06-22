@@ -15,3 +15,16 @@ This Application Dependencies are:
 * splashscreen: ^1.2.0
 * tflite: ^1.0.6
 
+## Screenshots:
+
+<span>
+<img src='Screenshot_1591958734.png' width = 350>
+
+<img src='Screenshot_1591958738.png' width = 350>
+</span>
+
+<span>
+<img src='Screenshot_1591958749.png' width = 350>
+
+<img src='Screenshot_1591958758.png' width = 350>
+</span>
