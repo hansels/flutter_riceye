@@ -8,9 +8,10 @@ Riceye are able to detect the disease from two sources:
 2. From the Gallery Image Picker
 
 This Application Dependencies are:
-  camera: ^0.5.8+2
-  image: ^2.1.12
-  image_picker: ^0.6.6+1
-  percent_indicator: ^2.1.1+1
-  splashscreen: ^1.2.0
-  tflite: ^1.0.6
+* camera: ^0.5.8+2
+* image: ^2.1.12
+* image_picker: ^0.6.6+1
+* percent_indicator: ^2.1.1+1
+* splashscreen: ^1.2.0
+* tflite: ^1.0.6
+
